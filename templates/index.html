@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarBot - Getränkeauswahl</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1d; color: #fff; padding: 20px; text-align: center; }
+        .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
+        .card { background: #2d2d34; border-radius: 12px; padding: 20px; width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .card h3 { color: #00adb5; margin-bottom: 10px; }
+        .btn { background: #00adb5; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .btn:hover { background: #008c9e; }
+        #log { margin-top: 30px; padding: 15px; background: #111; border-radius: 8px; font-family: monospace; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>🍸 BarBot Getränkekarte</h1>
+    <p>Wähle ein Getränk aus, um die Fahrt automatisch zu starten:</p>
+
+    <div class="grid">
+        {% for cocktail in cocktails %}
+        <div class="card">
+            <h3>{{ cocktail.Name }}</h3>
+            <p>{{ cocktail.Beschreibung }}</p>
+            <button class="btn" onclick="orderCocktail({{ cocktail.CocktailID }}, '{{ cocktail.Name }}')">Zubereiten</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="log">Status: Bereit...</div>
+
+    <script>
+        function orderCocktail(cocktailId, name) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerText = `[INFO] Bestelle ${name}... Lese Positionen aus DB...`;
+
+            fetch(`/api/order/${cocktailId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    logDiv.innerText = `[ERFOLG] ${name} gestartet!\nZiel-Positionen: [${data.positions.join(', ')}]\nESP32 Antwort: ${JSON.stringify(data.esp_response)}`;
+                } else {
+                    logDiv.innerText = `[FEHLER] ${data.message}`;
+                }
+            })
+            .catch(err => {
+                logDiv.innerText = `[FEHLER] Server-Verbindung fehlgeschlagen: ${err}`;
+            });
+        }
+    </script>
+</body>
+</html>
